@@ -54,8 +54,8 @@ cc_test(
 )
 
 cc_binary(
-    name = "https_main",
-    srcs = ["https_main.cc"],
+    name = "get_main",
+    srcs = ["get_main.cc"],
     deps = [
         ":https",
         "@com_google_absl//absl/flags:flag",

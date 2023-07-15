@@ -21,10 +21,11 @@ ABSL_FLAG(std::string, path_and_query, "", "Path and query to request");
 
 /**
  * Performs a GET request.
- *  
+ *
  * Example usage:
  *
- *   bazel run :https_main -- --server="google.com" --path_and_query="/search?q=ez-https"
+ *   bazel run :get_main -- --server="google.com" \
+ *     --path_and_query="/search?q=ez-https"
  */
 int main(int argc, char **argv) {
   absl::ParseCommandLine(argc, argv);
@@ -43,7 +44,7 @@ int main(int argc, char **argv) {
   }
 
   https.Close();
-  
+
   std::cout << response->body() << std::endl;
 
   return 0;

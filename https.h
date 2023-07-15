@@ -32,6 +32,62 @@
 #include <iostream>
 #include <string>
 
+/** Network adapter for HTTP. */
+class HttpAdapter {
+public:
+  // Connects to the HTTP server over TLS.
+  virtual absl::Status Connect() = 0;
+
+  // Executes a request.
+  virtual absl::StatusOr<
+      boost::beast::http::response<boost::beast::http::string_body>>
+  Execute(const boost::beast::http::request<boost::beast::http::string_body>
+              &request) = 0;
+
+  // Returns the hostname.
+  virtual std::string Hostname() = 0;
+
+  // Disconnects from the HTTP server.
+  virtual void Disconnect() = 0;
+};
+
+/** Concrete implementation of HttpAdapter. */
+class HttpAdapterImpl : public HttpAdapter {
+public:
+  HttpAdapterImpl(absl::string_view hostname)
+      : hostname_(std::string(hostname)),
+        ssl_ctx_(
+            boost::asio::ssl::context(boost::asio::ssl::context::tls_client)) {
+    ssl_ctx_.set_verify_mode(
+        boost::asio::ssl::context::verify_peer |
+        boost::asio::ssl::context::verify_fail_if_no_peer_cert);
+    ssl_ctx_.set_default_verify_paths();
+    boost::certify::enable_native_https_server_verification(ssl_ctx_);
+  }
+
+  absl::StatusOr<boost::beast::http::response<boost::beast::http::string_body>>
+  Execute(const boost::beast::http::request<boost::beast::http::string_body>
+              &request) override;
+
+  absl::Status Connect() override;
+
+  std::string Hostname() override { return hostname_; }
+
+  void Disconnect() override { stream_ptr_->next_layer().close(error_); }
+
+private:
+  std::string hostname_;
+  boost::asio::io_context ctx_;
+  boost::asio::ssl::context ssl_ctx_;
+  boost::system::error_code error_;
+  std::unique_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>
+      stream_ptr_;
+  absl::Status Error() {
+    return this->error_ ? absl::InternalError(this->error_.message())
+                        : absl::OkStatus();
+  }
+};
+
 /**
  * Performs GET, PUT, POST, and DELETE requests over TLS and
  * decompresses responses.
@@ -74,18 +130,12 @@
 class Https {
 
 public:
-  // Initialize with a hostname, e.g. "google.com".
+  Https(std::shared_ptr<HttpAdapter> adapter)
+      : path_("/"), content_type_(""), authorization_(""),
+        verb_(boost::beast::http::verb::get), adapter_(adapter) {}
+
   Https(absl::string_view hostname)
-      : ssl_ctx_(
-            boost::asio::ssl::context(boost::asio::ssl::context::tls_client)),
-        hostname_(std::string(hostname)), path_("/"), content_type_(""),
-        authorization_(""), verb_(boost::beast::http::verb::get) {
-    ssl_ctx_.set_verify_mode(
-        boost::asio::ssl::context::verify_peer |
-        boost::asio::ssl::context::verify_fail_if_no_peer_cert);
-    ssl_ctx_.set_default_verify_paths();
-    boost::certify::enable_native_https_server_verification(ssl_ctx_);
-  }
+      : Https(std::make_shared<HttpAdapterImpl>(hostname)) {}
 
   // The path and query of the request.
   Https &SetPath(absl::string_view path) {
@@ -112,7 +162,7 @@ public:
   }
 
   // Connects to the remote server over TLS.
-  absl::Status Connect();
+  absl::Status Connect() { return adapter_->Connect(); }
 
   // Gets the resource.
   absl::StatusOr<boost::beast::http::response<boost::beast::http::string_body>>
@@ -138,25 +188,16 @@ public:
   }
 
   // Closes the connection.
-  void Close() { stream_ptr_->next_layer().close(error_); }
+  void Close() { adapter_->Disconnect(); }
 
 private:
-  boost::asio::io_context ctx_;
-  boost::asio::ssl::context ssl_ctx_;
-  std::string hostname_;
   std::string path_;
   std::string content_type_;
   std::string authorization_;
   std::string body_;
   boost::beast::http::verb verb_;
-  boost::system::error_code error_;
+  std::shared_ptr<HttpAdapter> adapter_;
   bool keep_alive_;
-  std::unique_ptr<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>
-      stream_ptr_;
-  absl::Status Error() {
-    return this->error_ ? absl::InternalError(this->error_.message())
-                        : absl::OkStatus();
-  }
   absl::StatusOr<boost::beast::http::response<boost::beast::http::string_body>>
   Execute();
 };

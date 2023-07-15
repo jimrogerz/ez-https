@@ -1,4 +1,4 @@
-// EZ-SMTP (C) 2023 Jim Rogers.
+// EZ-HTTPS Copyright 2023 Jim Rogers.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,19 +16,35 @@
 #include "gmock/gmock.h"
 #include <gtest/gtest.h>
 
+namespace {
+
+namespace http = boost::beast::http;
+
+class MockHttpAdapter : public HttpAdapter {
+public:
+  MOCK_METHOD(absl::Status, Connect, (), (override));
+  MOCK_METHOD(absl::StatusOr<http::response<http::string_body>>, Execute,
+              (const http::request<http::string_body> &request), (override));
+  MOCK_METHOD(std::string, Hostname, (), (override));
+  MOCK_METHOD(void, Disconnect, (), (override));
+};
+
 class HttpsTest : public ::testing::Test {
 public:
-  HttpsTest() : https_("test_host_name.com") {}
+  HttpsTest()
+      : mock_adapter_(std::make_shared<MockHttpAdapter>()),
+        https_(mock_adapter_) {}
 
 protected:
+  MockHttpAdapter &adapter() { return *mock_adapter_; }
+  std::shared_ptr<MockHttpAdapter> mock_adapter_;
   Https https_;
 };
 
-// TODO (jimrogerz@gmail.com): Mock networking
-TEST_F(HttpsTest, Get) {
-  //EXPECT_FALSE(https_.Connect().ok());
+TEST_F(HttpsTest, Connect) {
+  EXPECT_CALL(adapter(), Connect()).Times(1);
 
-  auto response = https_.SetPath("test").Get();
-
-  
+  EXPECT_TRUE(https_.Connect().ok());
 }
+
+} // namespace

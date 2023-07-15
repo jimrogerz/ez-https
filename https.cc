@@ -54,7 +54,7 @@ void Decompress(http::response<http::string_body> &response) {
 
 } // namespace
 
-absl::Status Https::Connect() {
+absl::Status HttpAdapterImpl::Connect() {
   tcp::socket socket(ctx_);
   tcp::resolver resolver(ctx_);
   auto endpoint = resolver.resolve(hostname_, "443", error_);
@@ -73,13 +73,26 @@ absl::Status Https::Connect() {
   return absl::OkStatus();
 }
 
+absl::StatusOr<http::response<http::string_body>>
+HttpAdapterImpl::Execute(const http::request<http::string_body> &request) {
+  http::write(*stream_ptr_, request, error_);
+  if (error_)
+    return Error();
+  http::response<http::string_body> response;
+  beast::flat_buffer buffer;
+  http::read(*stream_ptr_, buffer, response, error_);
+  if (error_)
+    return Error();
+  return response;
+}
+
 absl::StatusOr<http::response<http::string_body>> Https::Execute() {
   http::request<http::string_body> request;
   request.method(verb_);
   request.target(path_);
   request.keep_alive(keep_alive_);
   request.set(http::field::accept_encoding, "gzip, deflate");
-  request.set(http::field::host, hostname_);
+  request.set(http::field::host, adapter_->Hostname());
   if (!authorization_.empty()) {
     request.set(http::field::authorization, authorization_);
   }
@@ -90,14 +103,8 @@ absl::StatusOr<http::response<http::string_body>> Https::Execute() {
     request.set(http::field::content_length, std::to_string(body_.length()));
     request.body() = body_;
   }
-  http::write(*stream_ptr_, request, error_);
-  if (error_)
-    return Error();
-  http::response<http::string_body> response;
-  beast::flat_buffer buffer;
-  http::read(*stream_ptr_, buffer, response, error_);
-  if (error_)
-    return Error();
-  Decompress(response);
+
+  auto response = adapter_->Execute(request);
+  Decompress(*response);
   return response;
 }
