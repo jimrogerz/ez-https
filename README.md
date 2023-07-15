@@ -12,7 +12,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
     name = "ez-https",
-    commit = "TODO",
+    commit = "5e802524cf97e38fda4e8bddea481d93c93d1371",
     remote = "https://github.com/jimrogerz/ez-https.git",
 )
 ```
