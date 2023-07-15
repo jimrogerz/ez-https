@@ -12,7 +12,7 @@ load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
 
 git_repository(
     name = "ez-https",
-    commit = "5e802524cf97e38fda4e8bddea481d93c93d1371",
+    commit = "3b3812d37c0562ece3234129449ea53cba47bc70",
     remote = "https://github.com/jimrogerz/ez-https.git",
 )
 ```
@@ -23,7 +23,7 @@ Add `"@ez-https//:https"` to your BUILD deps.
 
 Example request to the OpenAI API:
 
-```
+```cpp
 #include "https.h"
 
 Https https("api.openai.com");
