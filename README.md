@@ -1,6 +1,6 @@
 # EZ-HTTPS
 
-A C++ HTTP over TLS library built with [bazel](https://bazel.build/).
+A [bazel](https://bazel.build/) C++ HTTP TLS library built on top of boost.
 
 ## Setup
 
@@ -21,37 +21,39 @@ Add `"@ez-https//:https"` to your BUILD deps.
 
 ## Usage
 
-Example request to the OpenAI API:
+Example POST request to OpenAI:
 
 ```cpp
 #include "https.h"
 
 Https https("api.openai.com");
 
-auto status = https.SetPath("/v1/images/generations")
-                 .SetContentType("application/json")
-                 .SetAuthorization(absl::StrCat("Bearer ", kApiKey));
-                 .KeepAlive();
-                 .Connect();
+auto status = https.Connect();
 if (!status.ok()) {
   std::cerr << "Unable to connect: " << connection_status << std::endl;
   return 1;
 }
 
-auto response = https.Post(absl::StrFormat(
+absl::string_view body = absl::StrFormat(
     "{"
     "\"prompt\": \"%s\","
     "\"n\": %d,"
     "\"size\": \"%s\","
     "\"response_format\": \"%s\""
     "}",
-    prompt, num_images, size, image_count == 1 ? "b64_json" : "url"));
+    prompt, num_images, size, image_count == 1 ? "b64_json" : "url");
+
+auto response = https.SetPath("/v1/images/generations")
+                     .SetContentType("application/json")
+                     .SetAuthorization(absl::StrCat("Bearer ", kApiKey));
+                     .Post(body);
+
+https.Close();
+
 if (!response.ok()) {
   std::cerr << "Unable to post request: " << response.status() << std::endl;
   return 1;
 }
-
-https.Close();
 
 std::cout << response->body();
 ```
