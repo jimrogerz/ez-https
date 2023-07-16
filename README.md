@@ -1,6 +1,6 @@
 # EZ-HTTPS
 
-A [bazel](https://bazel.build/) C++ HTTP TLS library built on top of boost.
+A [bazel](https://bazel.build/) C++ HTTP TLS library built with [boost](https://www.boost.org/) and [abseil](https://abseil.io/).
 
 ## Setup
 
