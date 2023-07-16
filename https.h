@@ -92,8 +92,6 @@ private:
  * Performs GET, PUT, POST, and DELETE requests over TLS and
  * decompresses responses.
  *
- * TODO (jimrogerz@gmail.com): compress PUT/POST bodies.
- *
  * Example usage:
  *
  * #include "https.h"
@@ -184,6 +182,13 @@ public:
   Put(absl::string_view body) {
     body_ = body;
     verb_ = boost::beast::http::verb::put;
+    return this->Execute();
+  }
+
+  // Deletes a resource.
+  absl::StatusOr<boost::beast::http::response<boost::beast::http::string_body>>
+  Delete() {
+    verb_ = boost::beast::http::verb::delete_;
     return this->Execute();
   }
 

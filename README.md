@@ -56,11 +56,6 @@ https.Close();
 std::cout << response->body();
 ```
 
-## TODO
-
-* PUT/POST body compression
-* Unit tests need work
-
 ## Contributing
 
 Follow the [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html). Update unit tests and confirm passing:
