@@ -30,7 +30,7 @@ Https https("api.openai.com");
 
 auto status = https.Connect();
 if (!status.ok()) {
-  std::cerr << "Unable to connect: " << connection_status << std::endl;
+  std::cerr << "Unable to connect: " << status << std::endl;
   return 1;
 }
 

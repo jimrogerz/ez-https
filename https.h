@@ -100,7 +100,7 @@ private:
  *
  * auto status = https.Connect();
  * if (!status.ok()) {
- *   std::cerr << "Unable to connect: " << connection_status << std::endl;
+ *   std::cerr << "Unable to connect: " << status << std::endl;
  *   return 1;
  * }
  *
@@ -112,14 +112,14 @@ private:
  *     "\"response_format\": \"%s\""
  *     "}",
  *     prompt, num_images, size, image_count == 1 ? "b64_json" : "url");
- * 
+ *
  * auto response = https.SetPath("/v1/images/generations")
  *                      .SetContentType("application/json")
  *                      .SetAuthorization(absl::StrCat("Bearer ", kApiKey));
  *                      .Post(body);
- * 
+ *
  * https.Close();
- * 
+ *
  * if (!response.ok()) {
  *   std::cerr << "Unable to post request: " << response.status() << std::endl;
  *   return 1;
