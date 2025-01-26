@@ -16,14 +16,6 @@ load("@rules_cc//cc:defs.bzl", "cc_library", "cc_binary")
 
 package(default_visibility = ["//visibility:public"])
 
-# https://github.com/djarek/certify
-cc_library(
-    name = "certify",
-    hdrs = glob(["**/*.hpp", "**/*.ipp"]),
-    includes = ["include"],
-    visibility = ["//visibility:public"],
-)
-
 cc_library(
     name = "https",
     srcs = ["https.cc"],

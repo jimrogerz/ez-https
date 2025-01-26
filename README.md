@@ -1,19 +1,23 @@
 # EZ-HTTPS
 
-A [bazel](https://bazel.build/) C++ HTTP TLS library built with [boost](https://www.boost.org/) and [abseil](https://abseil.io/).
+A C++ HTTP TLS library built with [boost](https://www.boost.org/) and [abseil](https://abseil.io/).
 
 ## Setup
 
-Add the following to your WORKSPACE file:
-
+Add the http_archive rule:
 
 ```
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+```
 
-git_repository(
+Add the http_archive using the latest commit from https://github.com/jimrogerz/ez-https/commits/main/:
+
+```
+EZ_HTTPS_COMMIT = "11955c784b54e5517073d2915edb563dff1e0ca2"
+http_archive(
     name = "ez-https",
-    commit = "ed408505f8939b48da22363e7ae471f4e0c98d1e",
-    remote = "https://github.com/jimrogerz/ez-https.git",
+    strip_prefix = "ez-https-" + EZ_HTTPS_COMMIT,
+    url = "https://github.com/jimrogerz/ez-https/archive/%s.zip" % EZ_HTTPS_COMMIT,
 )
 ```
 
